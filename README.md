@@ -1,7 +1,5 @@
 # Machine Learning Path
 
-Description
-
 Shortest Route Optimization
 Vehicle Routing Problem solves the problem by creating a distance dimension, which computes the cumulative distance traveled by each vehicle along its route. You can then set a cost proportional to the maximum of the total distances along each route. In setting up the problem, the distances between locations are calculated using Manhattan distance, in which the distance between two points, (x1, y1) and (x2, y2) is defined to be |x1 - x2| + |y1 - y2|.
 
