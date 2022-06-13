@@ -3,7 +3,7 @@
   <br />
 <p align="center">
   <a href="#">
-    <img src="logo/logos_getloc.png">
+    <img src="logo/logo_wotive.png">
   </a>
 </p>
 <br>
