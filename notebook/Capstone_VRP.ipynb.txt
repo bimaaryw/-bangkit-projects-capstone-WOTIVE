@@ -1,0 +1,721 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "4F1ZLB-valhe"
+      },
+      "source": [
+        "### Vehicle Routing Problem (VRP)\n",
+        "Simple VRP to generate the closest distance to the workshop."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Go2mjTLXalhu"
+      },
+      "source": [
+        "### Configure Google Maps API key\n",
+        "\n",
+        "To run the notebook, you must bring our own Maps Platform API key.  See https://developers.google.com/maps/gmp-get-started to get started."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 823
+        },
+        "id": "Ey-NpMXJalhx",
+        "outputId": "37e3d74f-62fa-484f-f99d-9688c7db4f02"
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "ModuleNotFoundError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mModuleNotFoundError\u001b[0m                       Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-1-2e7dc32d3d6a>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0;32mimport\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m \u001b[0;32mimport\u001b[0m \u001b[0mgmaps\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      3\u001b[0m \u001b[0;32mimport\u001b[0m \u001b[0mgmaps\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mdatasets\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      4\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      5\u001b[0m \u001b[0mAPI_KEY\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m'AIzaSyBYx8K1-1lBZh3NPnrg9XpmkatqV2xiKLY'\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mModuleNotFoundError\u001b[0m: No module named 'gmaps'",
+            "",
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0;32m\nNOTE: If your import is failing due to a missing package, you can\nmanually install dependencies using either !pip or !apt.\n\nTo view examples of installing some common dependencies, click the\n\"Open Examples\" button below.\n\u001b[0;31m---------------------------------------------------------------------------\u001b[0m\n"
+          ],
+          "errorDetails": {
+            "actions": [
+              {
+                "action": "open_url",
+                "actionText": "Open Examples",
+                "url": "/notebooks/snippets/importing_libraries.ipynb"
+              }
+            ]
+          }
+        }
+      ],
+      "source": [
+        "import os\n",
+        "import gmaps\n",
+        "import gmaps.datasets\n",
+        "\n",
+        "API_KEY = 'AIzaSyBYx8K1-1lBZh3NPnrg9XpmkatqV2xiKLY'\n",
+        "gmaps.configure(api_key=API_KEY)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "NScBBCc8alh3"
+      },
+      "source": [
+        "### Create User Location\n",
+        "The first step is to create the user location and workshop locations.  The user location is the place where the vehicle stop and the workshop locations are the place where user can repair their vehicle.  These locations are chosen randomly on the map with fairly uniform spread across the city."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "scrolled": true,
+        "id": "zcb3PPH5alh6",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 501
+        },
+        "outputId": "3bd033c1-163c-4df9-c284-7be5fae13c1a"
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-2-4e2abe3d3ffe>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      3\u001b[0m }\n\u001b[1;32m      4\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 5\u001b[0;31m depot_layer = gmaps.symbol_layer(\n\u001b[0m\u001b[1;32m      6\u001b[0m     \u001b[0;34m[\u001b[0m\u001b[0mdepot\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'location'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mhover_text\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'Depot'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0minfo_box_content\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'Depot'\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      7\u001b[0m     \u001b[0mfill_color\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'white'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mstroke_color\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'red'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mscale\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m8\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mNameError\u001b[0m: name 'gmaps' is not defined"
+          ]
+        }
+      ],
+      "source": [
+        "depot = {\n",
+        "    'location': (-6.893429291032915, 107.61855204766223)\n",
+        "}\n",
+        "\n",
+        "depot_layer = gmaps.symbol_layer(\n",
+        "    [depot['location']], hover_text='Depot', info_box_content='Depot', \n",
+        "    fill_color='white', stroke_color='red', scale=8\n",
+        ")"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "DnsItwO4alh8"
+      },
+      "source": [
+        "### Set Number of Vehicles\n",
+        "The number of vehicles is set to 3.  After running through the entire notebook, come back and vary this value to observe its impact on the generated routes."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {
+        "id": "4cOYZZFZalh-"
+      },
+      "outputs": [],
+      "source": [
+        "num_vehicles = 3"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "RU_QiWIyaliB"
+      },
+      "source": [
+        "### Create Shipments"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 5,
+      "metadata": {
+        "id": "RbTi_EREaliE",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 530
+        },
+        "outputId": "41d2fa4d-fbcf-4cf6-ff59-3457b1d2df7e"
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-5-5decc4b5675d>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m     41\u001b[0m \u001b[0mshipment_labels\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m[\u001b[0m\u001b[0mshipment\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'name'\u001b[0m\u001b[0;34m]\u001b[0m \u001b[0;32mfor\u001b[0m \u001b[0mshipment\u001b[0m \u001b[0;32min\u001b[0m \u001b[0mshipments\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     42\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 43\u001b[0;31m shipments_layer = gmaps.symbol_layer(\n\u001b[0m\u001b[1;32m     44\u001b[0m     \u001b[0mshipment_locations\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mhover_text\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mshipment_labels\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     45\u001b[0m     \u001b[0mfill_color\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'white'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mstroke_color\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'black'\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mscale\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;36m4\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mNameError\u001b[0m: name 'gmaps' is not defined"
+          ]
+        }
+      ],
+      "source": [
+        "shipments = [\n",
+        "    { \n",
+        "        'name': 'Santa\\'s Place',\n",
+        "        'location': (29.417361, -98.437544)\n",
+        "    },\n",
+        "    {\n",
+        "        'name': 'Los Barrios',\n",
+        "        'location': (29.486833, -98.508355)\n",
+        "    },\n",
+        "    {\n",
+        "        'name': 'Jacala',\n",
+        "        'location': (29.468601, -98.524849),\n",
+        "    },\n",
+        "    {\n",
+        "        'name': 'Nogalitos',\n",
+        "        'location': (29.394394, -98.530070)\n",
+        "    },\n",
+        "    {\n",
+        "        'name': 'Alamo Molino',\n",
+        "        'location': (29.351701, -98.514740)\n",
+        "    },\n",
+        "    {\n",
+        "        'name': 'Jesse and Sons',\n",
+        "        'location': (29.435115, -98.593962)\n",
+        "    },\n",
+        "    {\n",
+        "        'name': 'Walmart',\n",
+        "        'location': (29.417867, -98.680534)\n",
+        "    },\n",
+        "    {\n",
+        "        'name': 'City Base Entertainment',\n",
+        "        'location': (29.355400, -98.445857)\n",
+        "    },\n",
+        "    { \n",
+        "        'name': 'Combat Medic Training',\n",
+        "        'location': (29.459497, -98.434057)\n",
+        "    }\n",
+        "]\n",
+        "\n",
+        "shipment_locations = [shipment['location'] for shipment in shipments]\n",
+        "shipment_labels = [shipment['name'] for shipment in shipments]\n",
+        "\n",
+        "shipments_layer = gmaps.symbol_layer(\n",
+        "    shipment_locations, hover_text=shipment_labels, \n",
+        "    fill_color='white', stroke_color='black', scale=4\n",
+        ")"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "qQfi7vxYaliL"
+      },
+      "source": [
+        "### Map Depot and Shipments"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 6,
+      "metadata": {
+        "id": "zjuMihNaaliN",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 413
+        },
+        "outputId": "831a86e1-589b-43ee-919e-21197f869bea"
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-6-7bcf6f53fd09>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0mfig\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mgmaps\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfigure\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      2\u001b[0m \u001b[0mfig\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0madd_layer\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdepot_layer\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      3\u001b[0m \u001b[0mfig\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0madd_layer\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mshipments_layer\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      4\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      5\u001b[0m \u001b[0mfig\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mNameError\u001b[0m: name 'gmaps' is not defined"
+          ]
+        }
+      ],
+      "source": [
+        "fig = gmaps.figure()\n",
+        "fig.add_layer(depot_layer)\n",
+        "fig.add_layer(shipments_layer)\n",
+        "\n",
+        "fig"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7IOghXnJaliP"
+      },
+      "source": [
+        "![depots-shipments](https://woolpert.com/wp-content/uploads/2019/08/depots-shipments.png)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "6T_JqFmTaliR"
+      },
+      "source": [
+        "### Build Distance Matrix\n",
+        "The Distance Matrix API builds the cost matrix.  Distance Matrix API returns both the distance and duration for each origin-destination pair.  For the first solution example, we generate the cost matrix using distance.  The cost matrix consists of real-world road distances (based on the Google Maps road network) between each depot and shipment pair and serves as a key input into the VRP solver.  API calls are made with the Python client for Google Maps Services (https://github.com/googlemaps/google-maps-services-python)."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 7,
+      "metadata": {
+        "scrolled": false,
+        "id": "EUD_MuUlaliT",
+        "outputId": "a92a7736-1b5f-4777-ba6d-de925f95b9f3",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 853
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "ModuleNotFoundError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mModuleNotFoundError\u001b[0m                       Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-7-f72ffeb024d4>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0;32mimport\u001b[0m \u001b[0mgooglemaps\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      2\u001b[0m \u001b[0;32mimport\u001b[0m \u001b[0mpandas\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0mpd\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      3\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      4\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      5\u001b[0m \u001b[0;32mdef\u001b[0m \u001b[0mbuild_distance_matrix\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdepot\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mshipments\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mmeasure\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0;34m'distance'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mModuleNotFoundError\u001b[0m: No module named 'googlemaps'",
+            "",
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0;32m\nNOTE: If your import is failing due to a missing package, you can\nmanually install dependencies using either !pip or !apt.\n\nTo view examples of installing some common dependencies, click the\n\"Open Examples\" button below.\n\u001b[0;31m---------------------------------------------------------------------------\u001b[0m\n"
+          ],
+          "errorDetails": {
+            "actions": [
+              {
+                "action": "open_url",
+                "actionText": "Open Examples",
+                "url": "/notebooks/snippets/importing_libraries.ipynb"
+              }
+            ]
+          }
+        }
+      ],
+      "source": [
+        "import googlemaps\n",
+        "import pandas as pd\n",
+        "\n",
+        "\n",
+        "def build_distance_matrix(depot, shipments, measure='distance'):\n",
+        "\n",
+        "    gmaps_services = googlemaps.Client(key=API_KEY)\n",
+        "    origins = destinations = [item['location'] for item in [depot] + shipments]\n",
+        "    dm_response = gmaps_services.distance_matrix(origins=origins, destinations=destinations)\n",
+        "    dm_rows = [row['elements'] for row in dm_response['rows']]\n",
+        "    distance_matrix = [[item[measure]['value'] for item in dm_row] for dm_row in dm_rows]\n",
+        "    return distance_matrix\n",
+        "\n",
+        "try:\n",
+        "    objective = 'distance'  # distance or duration\n",
+        "    # Distance Matrix API takes a max 100 elements = (origins x destinations), limit to 10 x 10\n",
+        "    distance_matrix = build_distance_matrix(depot, shipments[0:9], objective)\n",
+        "    df = pd.DataFrame(distance_matrix)\n",
+        "\n",
+        "except:\n",
+        "    print('Something went wrong building distance matrix.')\n",
+        "\n",
+        "df"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jOo_SA9OaliY"
+      },
+      "source": [
+        "### Solution Logic\n",
+        "The VRP solver is an OR-Tools component (https://developers.google.com/optimization/routing/vrp).  Additional documentation on the algorithm and computation options are available in OR-Tools."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 8,
+      "metadata": {
+        "id": "jSUGgN88aliZ",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 131
+        },
+        "outputId": "91c049c4-8a73-4324-883e-2706a927a5b5"
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "SyntaxError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;36m  File \u001b[0;32m\"<ipython-input-8-ebf38b513009>\"\u001b[0;36m, line \u001b[0;32m19\u001b[0m\n\u001b[0;31m    while not routi UUng.IsEnd(index):\u001b[0m\n\u001b[0m                       ^\u001b[0m\n\u001b[0;31mSyntaxError\u001b[0m\u001b[0;31m:\u001b[0m invalid syntax\n"
+          ]
+        }
+      ],
+      "source": [
+        "\"\"\"Vehicles Routing Problem (VRP).\"\"\"\n",
+        "from ortools.constraint_solver import routing_enums_pb2\n",
+        "from ortools.constraint_solver import pywrapcp\n",
+        "\n",
+        "\n",
+        "def create_data_model(distance_matrix, num_vehicles):\n",
+        "    \"\"\"Stores the data for the problem.\"\"\"\n",
+        "    data = {}\n",
+        "    data['distance_matrix'] = distance_matrix\n",
+        "    data['num_vehicles'] = num_vehicles\n",
+        "    data['depot'] = 0\n",
+        "    return data\n",
+        "\n",
+        "def extract_routes(num_vehicles, manager, routing, solution):\n",
+        "    routes = {}\n",
+        "    for vehicle_id in range(num_vehicles):\n",
+        "        routes[vehicle_id] = []\n",
+        "        index = routing.Start(vehicle_id)\n",
+        "        while not routi UUng.IsEnd(index):\n",
+        "            routes[vehicle_id].append(manager.IndexToNode(index))\n",
+        "            previous_index = index\n",
+        "            index = solution.Value(routing.NextVar(index))\n",
+        "        routes[vehicle_id].append(manager.IndexToNode(index))\n",
+        "    return routes\n",
+        "\n",
+        "def print_solution(num_vehicles, manager, routing, solution):\n",
+        "    \"\"\"Prints solution on console.\"\"\"\n",
+        "    max_route_distance = 0\n",
+        "    for vehicle_id in range(num_vehicles):\n",
+        "        index = routing.Start(vehicle_id)\n",
+        "        plan_output = 'Route for vehicle {}:\\n'.format(vehicle_id)\n",
+        "        route_distance = 0\n",
+        "        while not routing.IsEnd(index):\n",
+        "            plan_output += ' {} -> '.format(manager.IndexToNode(index))\n",
+        "            previous_index = index\n",
+        "            index = solution.Value(routing.NextVar(index))\n",
+        "            route_distance += routing.GetArcCostForVehicle(\n",
+        "                previous_index, index, vehicle_id)\n",
+        "        plan_output += '{}\\n'.format(manager.IndexToNode(index))\n",
+        "        plan_output += 'Cost of the route: {}\\n'.format(route_distance)\n",
+        "        print(plan_output)\n",
+        "        max_route_distance = max(route_distance, max_route_distance)\n",
+        "    print('Maximum route cost: {}'.format(max_route_distance))\n",
+        "\n",
+        "def generate_solution(data, manager, routing):  \n",
+        "    \"\"\"Solve the CVRP problem.\"\"\"\n",
+        "    \n",
+        "    # Create and register a transit callback.\n",
+        "    def distance_callback(from_index, to_index):\n",
+        "        \"\"\"Returns the distance between the two nodes.\"\"\"\n",
+        "        # Convert from routing variable Index to distance matrix NodeIndex.\n",
+        "        from_node = manager.IndexToNode(from_index)\n",
+        "        to_node = manager.IndexToNode(to_index)\n",
+        "        return data['distance_matrix'][from_node][to_node]\n",
+        "\n",
+        "    transit_callback_index = routing.RegisterTransitCallback(distance_callback)\n",
+        "\n",
+        "    # Define cost of each arc.\n",
+        "    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)\n",
+        "\n",
+        "    # Add Distance constraint.\n",
+        "    dimension_name = 'Distance'\n",
+        "    flattened_distance_matrix = [i for j in data['distance_matrix'] for i in j]\n",
+        "    max_travel_distance = 2 * max(flattened_distance_matrix)\n",
+        "\n",
+        "    routing.AddDimension(\n",
+        "        transit_callback_index,\n",
+        "        0,  # no slack\n",
+        "        max_travel_distance,  # vehicle maximum travel distance\n",
+        "        True,  # start cumul to zero\n",
+        "        dimension_name)\n",
+        "    distance_dimension = routing.GetDimensionOrDie(dimension_name)\n",
+        "    distance_dimension.SetGlobalSpanCostCoefficient(100)\n",
+        "\n",
+        "    # Setting first solution heuristic.\n",
+        "    search_parameters = pywrapcp.DefaultRoutingSearchParameters()\n",
+        "    search_parameters.first_solution_strategy = (\n",
+        "        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)\n",
+        "\n",
+        "    # Solve the problem.\n",
+        "    solution = routing.SolveWithParameters(search_parameters)\n",
+        "    return solution\n",
+        "\n",
+        "def solve_vrp_for(distance_matrix, num_vehicles):\n",
+        "    # Instantiate the data problem.\n",
+        "    data = create_data_model(distance_matrix, num_vehicles)\n",
+        "\n",
+        "    # Create the routing index manager.\n",
+        "    manager = pywrapcp.RoutingIndexManager(\n",
+        "        len(data['distance_matrix']), data['num_vehicles'], data['depot'])\n",
+        "\n",
+        "    # Create Routing Model.\n",
+        "    routing = pywrapcp.RoutingModel(manager)\n",
+        "\n",
+        "    # Solve the problem\n",
+        "    solution = generate_solution(data, manager, routing)\n",
+        "    \n",
+        "    if solution:\n",
+        "        # Print solution on console.\n",
+        "        print_solution(num_vehicles, manager, routing, solution)\n",
+        "        routes = extract_routes(num_vehicles, manager, routing, solution)\n",
+        "        return routes\n",
+        "    else:\n",
+        "        print('No solution found.')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "OeNY8V_balib"
+      },
+      "source": [
+        "### Solve for Distance\n",
+        "The generated route for each vehicle are logged to the console, including a node-to-node chain diagram."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 9,
+      "metadata": {
+        "id": "-DH3C72Aalic",
+        "outputId": "e7e73fa9-6105-478c-a4d2-5e9f4dfc58c3",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Something went wrong solving VRP.\n"
+          ]
+        }
+      ],
+      "source": [
+        "try:\n",
+        "    routes = solve_vrp_for(distance_matrix, num_vehicles)\n",
+        "except:\n",
+        "    print('Something went wrong solving VRP.')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ngF7ho-talic"
+      },
+      "source": [
+        "### Map the Solution\n",
+        "The Directions API is called to generate the road pathways to overlay on the map.  Note: we call Directions API merely as a convenience to generate the polylines for map display reasons only.  It’s performing no waypoint optimization since the VRP solver has already performed all needed optimization."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 10,
+      "metadata": {
+        "id": "BZsX-s5yalie",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 501
+        },
+        "outputId": "bf11ecf9-a60e-45b8-cb91-810cd03c7d9c"
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-10-deafeea10f26>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m     22\u001b[0m             \u001b[0mfig\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0madd_layer\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mreturn_layer\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     23\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 24\u001b[0;31m \u001b[0;32mif\u001b[0m \u001b[0mroutes\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     25\u001b[0m     \u001b[0mmap_solution\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdepot\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mshipments\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mroutes\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     26\u001b[0m \u001b[0;32melse\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mNameError\u001b[0m: name 'routes' is not defined"
+          ]
+        }
+      ],
+      "source": [
+        "def map_solution(depot, shipments, routes):\n",
+        "    colors = ['blue','red','green','#800080','#000080','#008080']\n",
+        "    for vehicle_id in routes:\n",
+        "        waypoints = []\n",
+        "        \n",
+        "        # skip depot (occupies first and last index)\n",
+        "        for shipment_index in routes[vehicle_id][1:-1]: \n",
+        "            waypoints.append(shipments[shipment_index-1]['location'])\n",
+        "        \n",
+        "        if len(waypoints) == 0:\n",
+        "            print('Empty route:', vehicle_id)\n",
+        "        else:\n",
+        "            route_layer = gmaps.directions_layer(\n",
+        "                depot['location'], waypoints[-1], waypoints=waypoints[0:-1], show_markers=True,\n",
+        "                stroke_color=colors[vehicle_id], stroke_weight=5, stroke_opacity=0.5)\n",
+        "            fig.add_layer(route_layer)\n",
+        "            \n",
+        "            # complete the route from last shipment to depot\n",
+        "            return_layer = gmaps.directions_layer(\n",
+        "                waypoints[-1], depot['location'], show_markers=False,\n",
+        "                stroke_color=colors[vehicle_id], stroke_weight=5, stroke_opacity=0.5)\n",
+        "            fig.add_layer(return_layer)\n",
+        "\n",
+        "if routes:\n",
+        "    map_solution(depot, shipments, routes)\n",
+        "else:\n",
+        "    print('No solution found.') \n",
+        "\n",
+        "fig"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Yn6bx41walif"
+      },
+      "source": [
+        "![distance-vrp-solution](https://woolpert.com/wp-content/uploads/2019/08/distance-vrp-solution.png)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "IC9BW4u0alif"
+      },
+      "source": [
+        "### Solve for Duration\n",
+        "For a second VRP solver run, we generate the cost matrix based on duration.  The goal here is to minimize delivery time.  By comparing these generated routes with the above routes derived from a distance-based cost matrix, it’s evident that the routes differ significantly.  This makes sense considering the goals to minimize either distance or duration can be in competition."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 11,
+      "metadata": {
+        "id": "8fi_0OqValih",
+        "outputId": "5fe04d0b-7342-43cc-d50d-7494728be659",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 442
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Something went wrong solving for duration.\n"
+          ]
+        },
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-11-680be3d5f24d>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      7\u001b[0m     \u001b[0mprint\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m'Something went wrong solving for duration.'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      8\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 9\u001b[0;31m \u001b[0mdf\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m: name 'df' is not defined"
+          ]
+        }
+      ],
+      "source": [
+        "try:\n",
+        "    objective = 'duration'  # distance or duration\n",
+        "    distance_matrix = build_distance_matrix(depot, shipments[0:9], objective)\n",
+        "    df = pd.DataFrame(distance_matrix)\n",
+        "    routes = solve_vrp_for(distance_matrix, num_vehicles)\n",
+        "except:\n",
+        "    print('Something went wrong solving for duration.')\n",
+        "\n",
+        "df"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "H9faGZLFalii"
+      },
+      "source": [
+        "### Map the Solution"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 12,
+      "metadata": {
+        "id": "WGnr3KZSalij",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 472
+        },
+        "outputId": "5c4b021d-eaf8-4985-ab23-b8609e94ad46"
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "NameError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-12-046ce28e31ef>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0;32mif\u001b[0m \u001b[0mroutes\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      2\u001b[0m     \u001b[0mfig\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mgmaps\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfigure\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      3\u001b[0m     \u001b[0mfig\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0madd_layer\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdepot_layer\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      4\u001b[0m     \u001b[0mfig\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0madd_layer\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mshipments_layer\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      5\u001b[0m     \u001b[0mmap_solution\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdepot\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mshipments\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mroutes\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mNameError\u001b[0m: name 'routes' is not defined"
+          ]
+        }
+      ],
+      "source": [
+        "if routes:\n",
+        "    fig = gmaps.figure()\n",
+        "    fig.add_layer(depot_layer)\n",
+        "    fig.add_layer(shipments_layer)\n",
+        "    map_solution(depot, shipments, routes)\n",
+        "else:\n",
+        "    print('No solution found.')   \n",
+        "\n",
+        "fig"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "viQcWFcsalij"
+      },
+      "source": [
+        "![duration-vrp-solution](https://woolpert.com/wp-content/uploads/2019/08/duration-vrp-solution.png)"
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.7.3"
+    },
+    "colab": {
+      "name": "Capstone_VRP.ipynb",
+      "provenance": []
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
